@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    .btn-primary {
+        @apply flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2 px-6 rounded-full shadow transition;
+    }
+
+    .input-field {
+        @apply block w-full text-sm text-gray-700 border border-gray-300 rounded-xl bg-white px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+    }
+
+    .card {
+        @apply w-full max-w-2xl bg-white/70 backdrop-blur-md rounded-2xl shadow-xl border border-gray-200 overflow-hidden;
+    }
+
+    .card-content {
+        @apply p-8;
+    }
+
+    .upload-box {
+        @apply w-full max-w-lg bg-white rounded-xl shadow p-6 flex flex-col sm:flex-row gap-4 justify-between items-center;
+    }
+
+    .page-container {
+        @apply min-h-screen bg-gradient-to-br from-slate-100 to-slate-300 px-4 py-12 flex flex-col items-center font-sans;
+    }
+
+    .page-title {
+        @apply text-4xl sm:text-5xl font-extrabold text-gray-800 mb-10 text-center;
+    }
+
+    .vehicle-title {
+        @apply text-2xl font-bold text-gray-800;
+    }
+
+    .vehicle-subtitle {
+        @apply text-sm text-gray-500;
+    }
+
+    .vehicle-grid {
+        @apply grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-gray-700 text-sm;
+    }
+}
