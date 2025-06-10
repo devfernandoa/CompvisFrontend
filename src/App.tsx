@@ -29,6 +29,9 @@ interface VehicleInfo {
 
 const plateRegex = /^(?:[A-Z]{3}\d{4}|[A-Z]{3}\d[A-Z]\d{2})$/;
 
+// Base URL of your FastAPI backend (ensure VITE_API_BASE_URL is set)
+const API_BASE = 'http://localhost:8000'; // Replace with your actual backend URL
+
 export default function App() {
   const [file, setFile] = useState<File | null>(null);
   const [detections, setDetections] = useState<PlateDetection[]>([]);
@@ -36,58 +39,76 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [loadingCapture, setLoadingCapture] = useState(false);
   const [loadingVerify, setLoadingVerify] = useState(false);
-
-  const TOKEN = import.meta.env.VITE_WDAPI_TOKEN;
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       setFile(e.target.files[0]);
       setDetections([]);
       setVehicles([]);
+      setError(null);
     }
   };
 
-  // Substitui o mock por uma chamada real a POST my-url/analyze
+  // Chama o endpoint /detect-plate/ do backend
+  // in App.tsx
+
+  // helper to read File → DataURL
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+
   const handleCapture = async () => {
     if (!file) return;
     setLoadingCapture(true);
+    setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const base64 = await toBase64(file);
 
-      const response = await fetch('my-url/analyze', {
+      const isVideo = file.type.startsWith("video/");
+
+      const response = await fetch(`${API_BASE}/detect-plate/`, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64 }),
       });
 
+      if (response.status === 404) {
+        setDetections([]);
+        setError('Nenhuma placa detectada.');
+        return;
+      }
       if (!response.ok) {
-        console.error('Erro ao analisar a imagem:', response.statusText);
-        setLoadingCapture(false);
+        const text = await response.text();
+        console.error('Erro ao analisar a imagem:', response.status, text);
+        setError('Erro ao analisar a imagem. Tente novamente.');
         return;
       }
 
       const data = await response.json();
-      // Esperamos que o JSON tenha o formato:
-      // {
-      //   message: "Plates detected successfully.",
-      //   plates: {
-      //     "ABC1234": { image: "<base64>", frequency: ..., frame: ..., image_resolution: ... },
-      //     "XYZ1A23": { ... },
-      //     ...
-      //   }
-      // }
-
       const platesObj = data.plates || {};
       const newDetections: PlateDetection[] = Object.entries(platesObj).map(
-        ([plate, info], index) => ({
-          id: index + 1,
-          plate: plate,
-          imageUrl: `data:image/png;base64,${info.image}`,
-        })
+        ([plate, info], i) => {
+          const b64 = (info as any).image;
+          // if we sent a video, file.type === e.g. "video/mp4"
+          const prefix = isVideo
+            ? `data:${file.type};base64,`
+            : `data:image/png;base64,`;
+          return {
+            id: i + 1,
+            plate,
+            imageUrl: `${prefix}${b64}`,
+          };
+        }
       );
 
       setDetections(newDetections);
+
     } catch (err) {
       console.error('Falha na requisição de captura:', err);
     } finally {
@@ -95,7 +116,8 @@ export default function App() {
     }
   };
 
-  // Envia cada placa válida para a API externa e preenche informações de veículo
+
+  // Chama o endpoint /consulta-placa/{placa} do backend (com cache)
   const handleVerify = async () => {
     if (detections.length === 0) return;
     setLoadingVerify(true);
@@ -104,22 +126,17 @@ export default function App() {
       const fetchedVehicles: VehicleInfo[] = [];
 
       for (const d of detections) {
-        if (!plateRegex.test(d.plate)) {
-          continue;
-        }
+        if (!plateRegex.test(d.plate)) continue;
 
-        const resp = await fetch(
-          `https://wdapi2.com.br/consulta/${d.plate}/${TOKEN}`
-        );
+        const resp = await fetch(`${API_BASE}/consulta-placa/${d.plate}`);
         if (!resp.ok) {
           console.error(`Erro na consulta da placa ${d.plate}:`, resp.statusText);
           continue;
         }
-        const vehicleData = await resp.json();
 
-        // Supondo que a resposta JSON já tenha a mesma estrutura de VehicleInfo,
-        // basta atribuir 'placa' manualmente (caso não venha no payload).
-        // Ajuste conforme o formato real da resposta da API.
+        const result = await resp.json();
+        const vehicleData = result.data;
+
         const vehicleInfo: VehicleInfo = {
           MARCA: vehicleData.MARCA,
           MODELO: vehicleData.MODELO,
@@ -157,7 +174,8 @@ export default function App() {
   };
 
   const allValid =
-    detections.length > 0 && detections.every(d => plateRegex.test(d.plate));
+    detections.length > 0 &&
+    detections.every(d => plateRegex.test(d.plate));
 
   return (
     <div
@@ -200,6 +218,12 @@ export default function App() {
           {loadingCapture ? 'Capturando...' : 'Capturar'}
         </button>
       </div>
+
+      {error && (
+        <div className="w-full max-w-xl mb-4 p-4 rounded bg-red-100 border border-red-400 text-red-700">
+          {error}
+        </div>
+      )}
 
       {detections.length > 0 && (
         <div className="flex flex-col gap-4 w-full max-w-xl mb-10">
