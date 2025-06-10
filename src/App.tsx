@@ -30,7 +30,7 @@ interface VehicleInfo {
 const plateRegex = /^(?:[A-Z]{3}\d{4}|[A-Z]{3}\d[A-Z]\d{2})$/;
 
 // Base URL of your FastAPI backend (ensure VITE_API_BASE_URL is set)
-const API_BASE = '/api/'; // Replace with your actual backend URL
+const API_BASE = '/api'; // Replace with your actual backend URL
 
 export default function App() {
   const [file, setFile] = useState<File | null>(null);
