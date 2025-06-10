@@ -317,7 +317,7 @@ export default function App() {
                 <div>
                   <strong>Situação:</strong> {vehicle.situacao}
                 </div>
-                {vehicle.fipe?.dados?.length > 0 && (
+                {vehicle.fipe && vehicle.fipe.dados.length > 0 && (
                   <>
                     <div>
                       <strong>Modelo FIPE:</strong>{' '}
