@@ -2,7 +2,7 @@
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "rewrites": [
         {
-            "source": "/api/:path*",
+            "source": "/api_placa/:path*",
             "destination": "http://ec2-13-218-71-196.compute-1.amazonaws.com:8000/:path*"
         }
     ]
