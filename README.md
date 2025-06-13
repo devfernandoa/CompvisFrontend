@@ -44,8 +44,14 @@ Este projeto é uma aplicação front-end em React/TypeScript que detecta placas
    Atualmente o backend está configurado para um backend real em produção. Para rodar localmente, altere a seguinte variável no src/app.tsx:
 
    ```tsx
-   VITE_API_BASE_URL=https://api.seu-backend.com
+   API_BASE=https://api.seu-backend.com
    ```
+
+   Exemplo: Para executar localmente na porta 8000 seguindo o Readme do [backend do projeto](https://github.com/AnandaCampelo/compvis-backend), o tsx deve ser alterado para:
+
+   ```tsx
+   API_BASE = 'http://127.0.0.1:8000';
+   ``` 
 
 4. **Execute a aplicação em modo de desenvolvimento**
 
@@ -80,6 +86,14 @@ Este projeto é uma aplicação front-end em React/TypeScript que detecta placas
 * Tailwind CSS para estilos
 * lucide-react para ícones
 * FastAPI (Python) no backend
+
+## Notas para a correção:
+
+Esse frontend foi desenvolvido para seguir o escopo do projeto ao analisar somente placas brasileiras. Assim, para incluir placas de outros países, além de alterar o backend, é necessário alterar o regex utilizado para validação de placas no frontend em src/App.tsx:
+
+```tsx
+const plateRegex = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+```
 
 ## Contribuição
 
